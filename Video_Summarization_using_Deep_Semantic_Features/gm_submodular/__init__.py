@@ -1,3 +1,13 @@
+import numpy as np
+import random
+import logging
+import warnings
+import scipy.optimize
+import scipy.linalg
+import utils
+from gm_submodular import utils2
+import time
+
 '''
 This package contains code for submodular maximization and
 structured learning using stochastic gradient decent.
@@ -47,14 +57,7 @@ __email__ = "gygli@vision.ee.ethz.ch"
 __version__="0.1"
 __license__='BSD licence. If you use this code, please cite Gygli et al. [3]'
 
-import numpy as np
-import random
-import logging
-import warnings
-import scipy.optimize
-import scipy.linalg
-import utils
-import time
+
 from IPython.core.debugger import Tracer
 logger = logging.getLogger('gm_submodular')
 logger.setLevel(logging.ERROR)
@@ -212,11 +215,12 @@ def lazy_greedy_maximize(S,w,submod_fun,budget,loss_fun=None,useCost=False,rando
     currScore = 0.0
     i = 0
 
+
     if loss_fun is None:
         #FIXME: this is not actually a zero loss, but just a loss that is the same for all elements
         # This is a hack to ensure that, in case all weights w are zero, a non empty set is selected
         # i.e., just a random subset of size S.budget
-        loss_fun=utils.zero_loss
+        loss_fun=utils2.zero_loss
 
     ''' Select as long as we are within budget and have elements to select '''
     while True:
@@ -225,9 +229,9 @@ def lazy_greedy_maximize(S,w,submod_fun,budget,loss_fun=None,useCost=False,rando
             cand=list(sel_indices)
             cand.append(mb_indices[0])
             if useCost:
-                t_marg=((np.dot(w,utils.evalSubFun(submod_fun,cand,False,w)) + loss_fun(S,cand)) - currScore) / float(costs[mb_indices[0]])
+                t_marg=((np.dot(w,utils2.evalSubFun(submod_fun,cand,False,w)) + loss_fun(S,cand)) - currScore) / float(costs[mb_indices[0]])
             else:
-                t_marg=(np.dot(w,utils.evalSubFun(submod_fun,cand,False,w)) + loss_fun(S,cand) - currScore)
+                t_marg=(np.dot(w,utils2.evalSubFun(submod_fun,cand,False,w)) + loss_fun(S,cand) - currScore)
 
             if not skipAssertions:
                 assert marginal_benefits[mb_indices[0]]-t_marg >=-10**-5, ('%s: Non-submodular objective at element %d!: Now: %.3f; Before: %.3f' % (type,mb_indices[0],t_marg,marginal_benefits[mb_indices[0]]))
@@ -333,7 +337,7 @@ def learnSubmodularMixture(training_data, submod_shells, loss_fun, params=None, 
     training_examples=training_data[:]
 
     ''' Initialize the weights '''
-    function_list,names=utils.instaciateFunctions(submod_shells,training_examples[0])
+    function_list,names=utils2.instaciateFunctions(submod_shells,training_examples[0])
     w_0=np.ones(len(function_list),np.float)
     #w_0=np.random.rand(len(function_list))
 
@@ -372,7 +376,7 @@ def learnSubmodularMixture(training_data, submod_shells, loss_fun, params=None, 
         historical_grad=np.zeros(len(function_list))
 
     while exitTraining==False:
-        
+
         start_time = time.time()
 
         if it==0:
@@ -395,7 +399,7 @@ def learnSubmodularMixture(training_data, submod_shells, loss_fun, params=None, 
         logger.debug(training_examples[t].y_gt)
 
         ''' Instanciate the shells to submodular functions '''
-        function_list,names=utils.instaciateFunctions(submod_shells,training_examples[t])
+        function_list,names=utils2.instaciateFunctions(submod_shells,training_examples[t])
 
         ''' Approximate loss augmented inference
         (this is equivalent to a greedy submodular optimization) '''
@@ -407,8 +411,8 @@ def learnSubmodularMixture(training_data, submod_shells, loss_fun, params=None, 
 
 
         ''' Subgradient '''
-        score_t  = utils.evalSubFun(function_list,y_t,False)
-        score_gt = utils.evalSubFun(function_list,list(training_examples[t].y_gt),True)
+        score_t  = utils2.evalSubFun(function_list,y_t,False)
+        score_gt = utils2.evalSubFun(function_list,list(training_examples[t].y_gt),True)
 
         if params.norm_objective_scores:
             score_t /= score_t.sum()

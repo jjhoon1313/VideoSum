@@ -1,8 +1,8 @@
-from func.nets import vid_enc, vid_enc_vgg19
 from chainer import serializers, configuration
 from summarize import get_flabel
 from vsum2 import VSUM2
 from skvideo.io import vread, vwrite
+from func.nets import vid_enc, vid_enc_vgg19
 
 import chainer
 import numpy as np
@@ -22,7 +22,7 @@ if not os.path.exists(out_dir):
 
 
 # summarize video
-v_id = "video0"
+v_id = "video2"
 # video_path = 'data/summe/videos/%s.mp4' % v_id
 video_path = 'data/%s.mp4' % v_id
 
